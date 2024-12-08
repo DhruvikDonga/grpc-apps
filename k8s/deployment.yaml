@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grpc-apps
+  labels:
+    app: grpc-service
+    env: demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      env: demo
+  template:
+    metadata:
+      name: grpc-service-pod
+      labels:
+        env: demo
+        app: grpc-service
+    spec:
+      containers:
+      - name: grpc-service
+        image: grpc-app:latest
+        imagePullPolicy: Never 
+        env:
+          - name: IS_K8S
+            value: "true"
+          - name: SVCNAME
+            value: "grpc-service"
+          - name: CLUSTER
+            value: "cluster" ## its cluster.env as whole no cluster name as such
+          - name: NAMESPACE
+            value: "default"
+          - name: POD
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name 
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+          - containerPort: 8081
+          - containerPort: 9091

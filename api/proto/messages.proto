@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package messages;
+option go_package = "./messages;messages"; // Add this line
+
+service MessageService {
+  rpc GetAllMessages (Empty) returns (stream Message);
+} 
+
+message Message {
+  string room = 1;
+  string client_name = 2;
+  string message = 3;
+}
+
+message Response {
+  string status = 1;
+}
+
+message Empty {}
+
+message MessageList {
+  repeated Message messages = 1;
+}
