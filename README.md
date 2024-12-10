@@ -112,3 +112,13 @@ This result demonstrates how messages from multiple pods are fetched and display
 ---
 
 By following this setup, we ensure that Go apps can communicate across pods within a Kubernetes environment using gRPC streaming, while also managing the flow of messages directly from each pod in memory.
+
+# Why not using a database instead of storing in memory .
+There are scenarios where in memory becomes a necessity primary one is websockets my side project [simplysocket](https://github.com/DhruvikDonga/simplysocket) which is websocket . A websocket upgrades clients https session to receive and send message its like a bridge which actual sense connects to the app . If the app or a pod is loosed client disconnects from websocket itself . 
+Consider ``client_name`` as ws connection it self .
+
+It means 2 things here :- 
+- Pods can be scaled but clients logic won't be same as normal http request does client will connect to it .
+- Pods down scaling is a challenge as down scale will empty all data like in grpc-apps we can see message will be lost if deployment replicas are reduced .
+
+Each pod will have clients in it which are connected . There is a option to use a pub/sub module but why to rely on external service if something can be solved internally if tried 🌟 . 
