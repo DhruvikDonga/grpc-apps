@@ -126,7 +126,7 @@ By following this setup, we ensure that Go apps can communicate across pods with
 Ingress controller:- `kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml`
 
 > Note: 
-> if you are using headless clusterip instead of http nginx ingress controller will resolve dns like we are doing in our app main.go for grpc it will do for http 8081 but its http and we don't need to but good for websocket and stateful apps
+> if you are using headless clusterip instead of grpc-http-service.yaml nginx ingress controller will resolve dns like we are doing in our app main.go for grpc it will do for http 8081 but its http and we don't need to but good for websocket and stateful apps
 
 ### Loadbalancer
 
