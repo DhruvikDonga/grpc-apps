@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grpc-service-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    #- host: grpc-service.example.com
+    - host: grpc-app.lc # incas eof local add host.inc :- <ip-of-ingress-lb> <grpc-app.lc>
+      http:
+        paths:
+          - path: /add #add api to add
+            pathType: Prefix
+            backend:
+              service:
+                name: grpc-http-service
+                port:
+                  number: 8081
+          - path: /messages #messages api to display
+            pathType: Prefix
+            backend:
+              service:
+                name: grpc-http-service
+                port:
+                  number: 8081
+  # tls:
+  #   - hosts:
+  #       - grpc-service.example.com
+  #     secretName: grpc-service-tls # TLS secret name (ensure this secret exists with the TLS certificate)
+#Ingress controller;-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+
+#service/ingress-nginx-controller             LoadBalancer   10.96.43.116    172.18.255.201   80:32180/TCP,443:30728/TCP   64s

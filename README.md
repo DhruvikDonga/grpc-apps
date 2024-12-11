@@ -1,4 +1,3 @@
-
 # GRPC Message Distributed Service
 
 This guide explains how to set up a Go-based service with two APIs:
@@ -6,15 +5,16 @@ This guide explains how to set up a Go-based service with two APIs:
 1. One to fetch all messages across pods.
 2. Another to save messages in memory.
 
-We cover two scenarios:
+We will cover two scenarios:
+
 - How two local Go apps communicate and display all messages over gRPC.
 - How to achieve this communication in Kubernetes (K8s).
 
-We use one-directional gRPC streaming (response streaming) to stream all messages stored in memory in the Go app.
+The service uses one-directional gRPC streaming (response streaming) to stream all messages stored in memory in the Go app.
 
 ## 1. Setup gRPC with Protobuf
 
-To define the gRPC service, we use Protocol Buffers (Protobuf). The following command generates Go code from the `.proto` file:
+To define the gRPC service, we use Protocol Buffers (Protobuf). Generate Go code from the `.proto` file using the following command:
 
 ```bash
 protoc --go_out=. --go-grpc_out=. proto/messages.proto
@@ -35,43 +35,48 @@ kind load docker-image grpc-app:latest --name <cluster-name>
 
 ## 4. Service Configuration
 
-In Kubernetes, we need to create a **headless service** to allow direct communication between individual pods. A headless service does not allocate a cluster IP for load balancing but instead allows clients to communicate directly with the pods.
+In Kubernetes, we create a **headless service** to allow direct communication between individual pods. A headless service doesn't allocate a cluster IP for load balancing but allows clients to communicate directly with the pods.
+
+We have two apps: one for HTTP and the other for gRPC. The configuration steps are as follows:
 
 ### Key Features of a Headless Service:
-- **No ClusterIP**: Setting `clusterIP: None` means no load-balancing IP is assigned, and traffic is routed directly to the individual pods.
-- **DNS Resolution**: Kubernetes automatically creates DNS entries for each pod in the headless service, allowing clients to connect directly using DNS queries like `pod-name.grpc-service.default.svc.cluster.local`.
-- **StatefulSets**: Headless services are commonly used with StatefulSets, where each pod needs to be addressed individually by its DNS name.
-- **Pod IPs**: Instead of routing traffic to a single service IP, clients can query DNS and get back a list of pod IPs.
 
-### Headless Service Example:
+- **No ClusterIP**: Setting `clusterIP: None` means no load-balancing IP is assigned, and traffic is routed directly to individual pods.
+- **DNS Resolution**: Kubernetes creates DNS entries for each pod in the headless service, enabling direct connections using DNS queries like `pod-name.grpc-service.default.svc.cluster.local`.
+- **StatefulSets**: Headless services are often used with StatefulSets where each pod needs to be addressed individually by its DNS name.
+- **Pod IPs**: Instead of routing traffic to a single service IP, clients query DNS and get back a list of pod IPs.
+
+### Example Headless Service Configuration:
+
+#### `grpc-service.yaml`
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: grpc-service
+  labels:
+    app: grpc-service
 spec:
-  clusterIP: None  # Headless service
+  clusterIP: None # Headless service (no load balancing, direct pod communication)
   selector:
     app: grpc-service
   ports:
-    - name: grpc-port
-      port: 9091
-      targetPort: 9091
-    - name: http-port
-      port: 8081
-      targetPort: 8081
+    - name: grpc-port # Name for the gRPC port
+      protocol: TCP
+      port: 9091 # gRPC port
+      targetPort: 9091 # Port on the pod to forward to
 ```
 
 ## 5. Deployment Configuration
 
-Within Kubernetes, services are resolved using a DNS convention like:
+Within Kubernetes, services are resolved using the DNS convention:
 
 ```
 <service-name>.<namespace>.svc.cluster.local
 ```
 
-This is the standard format to refer to services in a Kubernetes cluster.
+This format is standard for referring to services in a Kubernetes cluster.
 
 ### Fetching Pod IPs:
 
@@ -113,12 +118,25 @@ This result demonstrates how messages from multiple pods are fetched and display
 
 By following this setup, we ensure that Go apps can communicate across pods within a Kubernetes environment using gRPC streaming, while also managing the flow of messages directly from each pod in memory.
 
-# Why not using a database instead of storing in memory .
-There are scenarios where in memory becomes a necessity primary one is websockets my side project [simplysocket](https://github.com/DhruvikDonga/simplysocket) which is websocket . A websocket upgrades clients https session to receive and send message its like a bridge which actual sense connects to the app . If the app or a pod is loosed client disconnects from websocket itself . 
-Consider ``client_name`` as ws connection it self .
+## Using loadbalancer and ingress
 
-It means 2 things here :- 
+### Ingress
+
+`ingress.yaml` sets up a nginx ingress controller over `grpc-http-service.yaml` to loadbalance in local you can update hosts file and add url grpc-app.lc
+Ingress controller:- `kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml`
+
+### Loadbalancer
+
+Use metallb loadbalancer for kind `metallbconfig.yaml` has appropriate commands for it and `loadbalancer.yaml` implements it . Loadbalancer will use the selector and get pods .
+
+# Why not using a database instead of storing in memory .
+
+There are scenarios where in memory becomes a necessity primary one is websockets my side project [simplysocket](https://github.com/DhruvikDonga/simplysocket) which is websocket . A websocket upgrades clients https session to receive and send message its like a bridge which actual sense connects to the app . If the app or a pod is loosed client disconnects from websocket itself .
+Consider `client_name` as ws connection it self .
+
+It means 2 things here :-
+
 - Pods can be scaled but clients logic won't be same as normal http request does client will connect to it .
 - Pods down scaling is a challenge as down scale will empty all data like in grpc-apps we can see message will be lost if deployment replicas are reduced .
 
-Each pod will have clients in it which are connected . There is a option to use a pub/sub module but why to rely on external service if something can be solved internally if tried 🌟 . 
+Each pod will have clients in it which are connected . There is a option to use a pub/sub module but why to rely on external service if something can be solved internally if tried 🌟 .

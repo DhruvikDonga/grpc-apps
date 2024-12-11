@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grpc-service
+  labels:
+    app: grpc-service
+spec:
+  clusterIP: None # Headless service (no load balancing, direct pod communication)
+  selector:
+    app: grpc-service
+  ports:
+    - name: grpc-port # Name for the gRPC port
+      protocol: TCP
+      port: 9091 # gRPC port
+      targetPort: 9091 # Port on the pod to forward to

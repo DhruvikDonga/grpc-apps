@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grpc-http-service
+  labels:
+    app: grpc-service
+spec:
+  selector:
+    app: grpc-service
+  ports:
+    - name: http-port
+      protocol: TCP
+      port: 8081 # Expose HTTP port for ingress
+      targetPort: 8081 # Port on the pod
