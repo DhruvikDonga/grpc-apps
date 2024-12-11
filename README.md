@@ -118,12 +118,15 @@ This result demonstrates how messages from multiple pods are fetched and display
 
 By following this setup, we ensure that Go apps can communicate across pods within a Kubernetes environment using gRPC streaming, while also managing the flow of messages directly from each pod in memory.
 
-## Using loadbalancer and ingress
+## Using loadbalancer or ingress
 
 ### Ingress
 
 `ingress.yaml` sets up a nginx ingress controller over `grpc-http-service.yaml` to loadbalance in local you can update hosts file and add url grpc-app.lc
 Ingress controller:- `kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml`
+
+> Note: 
+> if you are using headless clusterip instead of http nginx ingress controller will resolve dns like we are doing in our app main.go for grpc it will do for http 8081 but its http and we don't need to but good for websocket and stateful apps
 
 ### Loadbalancer
 
